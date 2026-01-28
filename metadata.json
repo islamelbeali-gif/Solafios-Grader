@@ -1,0 +1,5 @@
+{
+  "name": "Solafios Grade Pro",
+  "description": "A weighted MCQ grading tool for science teachers to calculate scores based on variable answer weights and generate printable student reports.",
+  "requestFramePermissions": []
+}
