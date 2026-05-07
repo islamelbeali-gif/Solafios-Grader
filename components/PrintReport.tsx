@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { TestMetadata, StudentResult, OPTIONS, QUESTION_COUNT } from '../types';
+import { TestMetadata, StudentResult, getOptions } from '../types';
 import { Printer, Download, X, Loader2, School, GraduationCap } from 'lucide-react';
 
 interface PrintReportProps {
@@ -139,7 +139,7 @@ export const PrintReport: React.FC<PrintReportProps> = ({ metadata, student, ini
                 </tr>
               </thead>
               <tbody className="border border-slate-200">
-                {Array.from({ length: QUESTION_COUNT }).map((_, idx) => {
+                {Array.from({ length: metadata.questionCount || 10 }).map((_, idx) => {
                   const qNum = idx + 1;
                   const choice = student.answers[qNum];
                   const score = student.questionScores[qNum];
@@ -163,7 +163,7 @@ export const PrintReport: React.FC<PrintReportProps> = ({ metadata, student, ini
                       <td className="p-2 text-center font-bold bg-slate-50 text-slate-500 border-r border-slate-200">{qNum}</td>
                       <td className="p-2 text-center">
                         <div className="flex items-center justify-center gap-3">
-                           {OPTIONS.map(opt => (
+                           {getOptions(metadata.choiceCount || 5).map(opt => (
                              <span 
                                key={opt} 
                                className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold border-2 transition-all

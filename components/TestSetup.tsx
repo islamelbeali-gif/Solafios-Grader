@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { TestMetadata, ScoringKey, OPTIONS, QUESTION_COUNT, Option, StudentResult } from '../types';
+import { TestMetadata, ScoringKey, getOptions, Option, StudentResult } from '../types';
 import { ClipboardList, ArrowRight, Wand2, Download, Upload } from 'lucide-react';
 
 interface TestSetupProps {
@@ -19,19 +19,38 @@ export const TestSetup: React.FC<TestSetupProps> = ({
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Initialize scoring key if empty
+  // Initialize scoring key
   useEffect(() => {
-    if (Object.keys(scoringKey).length === 0) {
-      const initialKey: ScoringKey = {};
-      for (let i = 1; i <= QUESTION_COUNT; i++) {
-        initialKey[i] = { A: 0, B: 0, C: 0, D: 0, E: 0 };
+    let hasChanges = false;
+    const newKey = { ...scoringKey };
+    const options = getOptions(metadata.choiceCount || 5);
+    
+    for (let i = 1; i <= (metadata.questionCount || 10); i++) {
+      if (!newKey[i]) {
+        newKey[i] = {} as any;
+        options.forEach(opt => {
+          newKey[i][opt] = 0;
+        });
+        hasChanges = true;
+      } else {
+        // Ensure all choices exist for existing questions
+        options.forEach(opt => {
+          if (newKey[i][opt] === undefined) {
+             newKey[i][opt] = 0;
+             hasChanges = true;
+          }
+        });
       }
-      onScoringKeyChange(initialKey);
     }
-  }, []);
+    
+    if (hasChanges) {
+      onScoringKeyChange(newKey);
+    }
+  }, [metadata.questionCount, metadata.choiceCount, scoringKey]);
 
-  const handleMetaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onMetadataChange({ ...metadata, [e.target.name]: e.target.value });
+  const handleMetaChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const isNumField = e.target.name === 'questionCount' || e.target.name === 'choiceCount';
+    onMetadataChange({ ...metadata, [e.target.name]: isNumField ? parseInt(e.target.value) || 0 : e.target.value });
   };
 
   const handleScoreChange = (qIndex: number, option: Option, value: string) => {
@@ -46,10 +65,15 @@ export const TestSetup: React.FC<TestSetupProps> = ({
   };
 
   const applyDefaultPattern = () => {
-    // Pattern: A=4, B=3, C=2, D=1, E=0
+    // Pattern example: A=4, B=3, C=2, D=1, E=0, F=0...
     const newKey: ScoringKey = {};
-    for (let i = 1; i <= QUESTION_COUNT; i++) {
-      newKey[i] = { A: 4, B: 3, C: 2, D: 1, E: 0 };
+    const options = getOptions(metadata.choiceCount || 5);
+    for (let i = 1; i <= (metadata.questionCount || 10); i++) {
+      newKey[i] = {} as any;
+      options.forEach((opt, idx) => {
+         // descending score pattern matching A=4, B=3... etc for choiceCount=5
+         newKey[i][opt] = Math.max(0, (metadata.choiceCount || 5) - 1 - idx);
+      });
     }
     onScoringKeyChange(newKey);
   };
@@ -170,6 +194,31 @@ export const TestSetup: React.FC<TestSetupProps> = ({
               placeholder="e.g. Boys Section A"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Number of Questions</label>
+            <input
+              type="number"
+              name="questionCount"
+              min="1"
+              max="100"
+              value={metadata.questionCount}
+              onChange={handleMetaChange}
+              className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-600 mb-1">Number of Choices</label>
+            <select
+              name="choiceCount"
+              value={metadata.choiceCount}
+              onChange={handleMetaChange}
+              className="w-full border border-slate-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            >
+              {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                <option key={n} value={n}>{n} ({getOptions(n).join('-')})</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -189,7 +238,7 @@ export const TestSetup: React.FC<TestSetupProps> = ({
         </div>
         
         <p className="text-slate-500 text-sm mb-4">
-          Enter the marks awarded for each choice (A-E) for each question.
+          Enter the marks awarded for each choice for each question.
         </p>
 
         <div className="overflow-x-auto">
@@ -197,18 +246,18 @@ export const TestSetup: React.FC<TestSetupProps> = ({
             <thead>
               <tr className="bg-slate-50 text-slate-700">
                 <th className="p-3 border-b border-slate-200 text-left">Question</th>
-                {OPTIONS.map(opt => (
+                {getOptions(metadata.choiceCount || 5).map(opt => (
                   <th key={opt} className="p-3 border-b border-slate-200 font-semibold text-blue-800">Choice {opt}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {Array.from({ length: QUESTION_COUNT }).map((_, idx) => {
+              {Array.from({ length: metadata.questionCount || 10 }).map((_, idx) => {
                 const qNum = idx + 1;
                 return (
                   <tr key={qNum} className="hover:bg-slate-50">
                     <td className="p-2 border-b border-slate-100 font-medium text-slate-600 text-left pl-4">Q{qNum}</td>
-                    {OPTIONS.map(opt => (
+                    {getOptions(metadata.choiceCount || 5).map(opt => (
                       <td key={opt} className="p-2 border-b border-slate-100">
                         <input
                           type="number"

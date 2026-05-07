@@ -1,7 +1,9 @@
-export type Option = 'A' | 'B' | 'C' | 'D' | 'E';
+export type Option = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G' | 'H' | 'I' | 'J';
 
-export const OPTIONS: Option[] = ['A', 'B', 'C', 'D', 'E'];
-export const QUESTION_COUNT = 10;
+export const getOptions = (count: number): Option[] => {
+  const allOptions: Option[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+  return allOptions.slice(0, count);
+};
 
 export interface TestMetadata {
   testName: string;
@@ -9,6 +11,8 @@ export interface TestMetadata {
   grade: string;
   schoolName: string;
   section: string;
+  questionCount: number;
+  choiceCount: number;
 }
 
 // The scoring key defines how many points each option is worth for each question

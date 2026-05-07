@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ScoringKey, StudentResult, OPTIONS, QUESTION_COUNT, Option } from '../types';
+import { ScoringKey, StudentResult, getOptions, Option, TestMetadata } from '../types';
 import { PlusCircle, Trash2, Printer, UserPlus, CheckCircle2, Download, FileText } from 'lucide-react';
 
 interface StudentGradingProps {
+  metadata: TestMetadata;
   scoringKey: ScoringKey;
   students: StudentResult[];
   onAddStudent: (student: StudentResult) => void;
@@ -13,6 +14,7 @@ interface StudentGradingProps {
 }
 
 export const StudentGrading: React.FC<StudentGradingProps> = ({
+  metadata,
   scoringKey,
   students,
   onAddStudent,
@@ -28,9 +30,9 @@ export const StudentGrading: React.FC<StudentGradingProps> = ({
     let total = 0;
     const qScores: Record<number, number> = {};
     
-    for (let i = 1; i <= QUESTION_COUNT; i++) {
+    for (let i = 1; i <= (metadata.questionCount || 10); i++) {
       const selectedOption = answers[i];
-      const points = selectedOption ? scoringKey[i][selectedOption] : 0;
+      const points = selectedOption ? scoringKey[i]?.[selectedOption] ?? 0 : 0;
       qScores[i] = points;
       total += points;
     }
@@ -87,15 +89,15 @@ export const StudentGrading: React.FC<StudentGradingProps> = ({
             </div>
 
             <div className="space-y-4 mb-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
-              {Array.from({ length: QUESTION_COUNT }).map((_, idx) => {
+              {Array.from({ length: metadata.questionCount || 10 }).map((_, idx) => {
                 const qNum = idx + 1;
                 return (
                   <div key={qNum} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg border border-slate-100">
                     <span className="font-semibold text-slate-700 w-8">Q{qNum}</span>
                     <div className="flex gap-1">
-                      {OPTIONS.map(opt => {
+                      {getOptions(metadata.choiceCount || 5).map(opt => {
                         const isSelected = currentAnswers[qNum] === opt;
-                        const weight = scoringKey[qNum][opt];
+                        const weight = scoringKey[qNum]?.[opt] ?? 0;
                         return (
                           <button
                             key={opt}

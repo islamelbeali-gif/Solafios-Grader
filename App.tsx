@@ -15,6 +15,8 @@ const App: React.FC = () => {
     schoolName: '',
     grade: '',
     section: '',
+    questionCount: 10,
+    choiceCount: 5,
   });
   const [scoringKey, setScoringKey] = useState<ScoringKey>({});
   const [students, setStudents] = useState<StudentResult[]>([]);
@@ -116,6 +118,7 @@ const App: React.FC = () => {
             </div>
             
             <StudentGrading 
+              metadata={metadata}
               scoringKey={scoringKey}
               students={students}
               onAddStudent={handleAddStudent}
